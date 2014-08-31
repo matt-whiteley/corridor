@@ -4,32 +4,43 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour {
 
 	float speed = 0.20f;
-	float turnSpeed = 10.0f;
-	// Use this for initialization
-	void Start () {
-	
-	}
+	float finalSpeed;
+	//float turnSpeed = 10.0f;
+	RaycastHit hit;
+	Vector3 direction;
+	Quaternion lookRotation;
+	public Camera worldCam;
+
 	
 	// Update is called once per frame
 	void FixedUpdate () {
+		if(Input.GetAxis("Vertical") != 0 && Input.GetAxis("Horizontal") != 0){
+			finalSpeed = speed * 0.7071f;
+		}else{
+			finalSpeed = speed;
+		}
 	
-		float v = speed * Input.GetAxis("Vertical");
-		float h = speed * Input.GetAxis("Horizontal");
-		float turn = turnSpeed * Input.GetAxis("Mouse X");
+		float v = finalSpeed * Input.GetAxis("Vertical");
+		float h = finalSpeed * Input.GetAxis("Horizontal");
+
+		Vector3 mousePos = Input.mousePosition;
+		Ray ray = worldCam.ScreenPointToRay(mousePos);
+
 		MovementManager(v, h);
-		RotationManager(turn);
+		RotationManager(ray);
 	}
 
 	void MovementManager(float vertical, float horizontal){
-		//Vector3 targetDirection = new Vector3(horizontal, 0f, vertical);
-		//Quaternion targetRotation = Quaternion.LookRotation(targetDirection, Vector3.up);
 		Vector3 targetPosition = new Vector3(horizontal, 0f, vertical) + transform.position;
 		rigidbody.MovePosition(targetPosition);
 	}
 
-	void RotationManager(float turn){
-
-		Quaternion deltaRotation = Quaternion.Euler(new Vector3(0, turn, 0));
-		rigidbody.MoveRotation(rigidbody.rotation * deltaRotation);
+	void RotationManager(Ray mousePoint){
+		if(Physics.Raycast(mousePoint, out hit)){
+			Vector3 _2Dhit = new Vector3(hit.point.x, transform.position.y, hit.point.z);
+			direction = (_2Dhit - rigidbody.transform.position).normalized;
+			lookRotation = Quaternion.FromToRotation(transform.forward, direction);
+			rigidbody.MoveRotation(rigidbody.rotation * lookRotation);
+		}
 	}
 }
